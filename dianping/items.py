@@ -8,7 +8,18 @@
 import scrapy
 
 
-class ScrapyDianpingItem(scrapy.Item):
-    # define the fields for your item here like:
-    # name = scrapy.Field()
+class DianpingShopItem(scrapy.Item):
+    name = scrapy.Field()
+    rating = scrapy.Field()
+    comments = scrapy.Field()
+    cost_avg = scrapy.Field()
+    product_rating = scrapy.Field()
+    enviroment_rating = scrapy.Field()
+    service_rating = scrapy.Field()
+    address = scrapy.Field()
+    phone_number = scrapy.Field()
+    url = scrapy.Field()
+
+
+class DianpingCommentItem(scrapy.Item):
     pass
