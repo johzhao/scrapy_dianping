@@ -19,16 +19,21 @@ class DianpingSpiderSpider(scrapy.Spider):
     css_manager = CSSManager()
     unpack_pattern = re.compile(r'<[d|e] class="(.+?)"></.+?>')
 
+    cookies = {}
+
+    def _update_cookies(self):
+        self.cookies = {}
+        # cookie_str = ('_lxsdk_cuid=16b6afd908dc8-054ca566e7e5bb8-4a5568-fa000-16b6afd908dc2')
+        # fields = cookie_str.split(';')
+        # for field in fields:
+        #     splitted = field.split('=')
+        #     self.cookies[splitted[0].strip()] = splitted[1].strip()
+
     def start_requests(self):
-        cookie_str = ('s_ViewType=10; _lxsdk_cuid=16b6e52ec459-0945195ac099aa-71236752-1fa400-16b6e52ec46c8; _lxsdk=16b6e52ec459-0945195ac099aa-71236752-1fa400-16b6e52ec46c8; _hc.v=b74b93cf-c729-722d-dfc8-6854101a70f9.1560924057; _lxsdk_s=16b6ef08fd7-3ea-b2b-e75%7C%7C1')
-        cookies = {}
-        fields = cookie_str.split(';')
-        for field in fields:
-            splitted = field.split('=')
-            cookies[splitted[0].strip()] = splitted[1].strip()
+        self._update_cookies()
 
         for url in self.start_urls:
-            yield scrapy.Request(url, callback=self.parse_list, cookies=cookies)
+            yield scrapy.Request(url, callback=self.parse_list, cookies=self.cookies)
 
     def parse(self, response):
         pass
@@ -47,21 +52,12 @@ class DianpingSpiderSpider(scrapy.Spider):
         if response.xpath('//title/text()').get() == '验证中心':
             yield from self.parse_verify(response)
         else:
-
-            cookie_str = (
-                's_ViewType=10; _lxsdk_cuid=16b6e52ec459-0945195ac099aa-71236752-1fa400-16b6e52ec46c8; _lxsdk=16b6e52ec459-0945195ac099aa-71236752-1fa400-16b6e52ec46c8; _hc.v=b74b93cf-c729-722d-dfc8-6854101a70f9.1560924057; _lxsdk_s=16b6ef08fd7-3ea-b2b-e75%7C%7C1')
-            cookies = {}
-            fields = cookie_str.split(';')
-            for field in fields:
-                splitted = field.split('=')
-                cookies[splitted[0].strip()] = splitted[1].strip()
-
             shops = response.xpath('//ul/li//div[@class="tit"]/a[1]/@href').getall()
             if shops:
                 for shop in shops:
                     self.logger.info(shop)
-                    yield scrapy.Request(shop, callback=self.parse_shop, cookies=cookies)
-                    break
+                    yield scrapy.Request(shop, callback=self.parse_shop, cookies=self.cookies)
+                    # break
 
             pages = response.xpath('//div[@class="page"]/a')
             if pages:
