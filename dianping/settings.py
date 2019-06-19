@@ -15,8 +15,7 @@ SPIDER_MODULES = ['dianping.spiders']
 NEWSPIDER_MODULE = 'dianping.spiders'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-USER_AGENT = ('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/537.36 (KHTML, like Gecko)'
-              ' Chrome/75.0.3770.90 Safari/53')
+USER_AGENT = ('Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/20100101 Firefox/66.0')
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False

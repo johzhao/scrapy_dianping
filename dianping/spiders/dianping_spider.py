@@ -1,3 +1,5 @@
+import re
+
 import scrapy
 
 from dianping.css_unpack.css_manager import CSSManager
@@ -11,14 +13,14 @@ class DianpingSpiderSpider(scrapy.Spider):
         'verify.meituan.com',
     ]
     start_urls = [
-        'http://www.dianping.com/search/keyword/2/0_%E4%B9%A6%E5%BA%97%E9%9F%B3%E5%83%8F/o11'
+        'http://www.dianping.com/search/keyword/2/0_%E4%B9%A6%E5%BA%97%E9%9F%B3%E5%83%8F/o11',
+        # 'http://www.dianping.com/shop/97590984',
     ]
     css_manager = CSSManager()
+    unpack_pattern = re.compile(r'<[d|e] class="(.+?)"></.+?>')
 
     def start_requests(self):
-        cookie_str = ('_lxsdk_s=16b6e52e057-7fc-bbe-8cd%7C%7C31; s_ViewType=10; _lxsdk_cuid=16b6e52ec459-094519'
-                      '5ac099aa-71236752-1fa400-16b6e52ec46c8; _lxsdk=16b6e52ec459-0945195ac099aa-71236752-1fa40'
-                      '0-16b6e52ec46c8; _hc.v=b74b93cf-c729-722d-dfc8-6854101a70f9.1560924057')
+        cookie_str = ('s_ViewType=10; _lxsdk_cuid=16b6e52ec459-0945195ac099aa-71236752-1fa400-16b6e52ec46c8; _lxsdk=16b6e52ec459-0945195ac099aa-71236752-1fa400-16b6e52ec46c8; _hc.v=b74b93cf-c729-722d-dfc8-6854101a70f9.1560924057; _lxsdk_s=16b6ef08fd7-3ea-b2b-e75%7C%7C1')
         cookies = {}
         fields = cookie_str.split(';')
         for field in fields:
@@ -45,11 +47,20 @@ class DianpingSpiderSpider(scrapy.Spider):
         if response.xpath('//title/text()').get() == '验证中心':
             yield from self.parse_verify(response)
         else:
+
+            cookie_str = (
+                's_ViewType=10; _lxsdk_cuid=16b6e52ec459-0945195ac099aa-71236752-1fa400-16b6e52ec46c8; _lxsdk=16b6e52ec459-0945195ac099aa-71236752-1fa400-16b6e52ec46c8; _hc.v=b74b93cf-c729-722d-dfc8-6854101a70f9.1560924057; _lxsdk_s=16b6ef08fd7-3ea-b2b-e75%7C%7C1')
+            cookies = {}
+            fields = cookie_str.split(';')
+            for field in fields:
+                splitted = field.split('=')
+                cookies[splitted[0].strip()] = splitted[1].strip()
+
             shops = response.xpath('//ul/li//div[@class="tit"]/a[1]/@href').getall()
             if shops:
                 for shop in shops:
                     self.logger.info(shop)
-                    yield scrapy.Request(shop, callback=self.parse_shop)
+                    yield scrapy.Request(shop, callback=self.parse_shop, cookies=cookies)
                     break
 
             pages = response.xpath('//div[@class="page"]/a')
@@ -60,15 +71,47 @@ class DianpingSpiderSpider(scrapy.Spider):
                 # yield scrapy.Request(next_page_url, callback=self.parse_list)
 
     def parse_shop(self, response):
+        css_unpacker = self._parse_css(response)
+
         item = DianpingShopItem()
+        item['url'] = response.url
 
         name = response.xpath('//div[@id="basic-info"]/h1/text()')
         if name:
-            item['name'] = name.get()
+            item['name'] = name.get().strip()
 
         rating = response.xpath('//div[@id="basic-info"]/div[@class="brief-info"]/span[1]/@title')
         if rating:
             item['rating'] = rating.get()
+
+        if css_unpacker:
+            address = response.xpath('//span[@id="address"]')
+            if address:
+                item['address'] = self._unpack_element(address, css_unpacker)
+
+            tel = response.xpath('//p[contains(@class, "tel")]')
+            if tel:
+                item['phone_number'] = self._unpack_element(tel, css_unpacker)
+
+            review_count = response.xpath('//span[@id="reviewCount"]')
+            if review_count:
+                item['comments'] = self._unpack_element(review_count, css_unpacker)
+
+            avg_price = response.xpath('//span[@id="avgPriceTitle"]')
+            if avg_price:
+                item['cost_avg'] = self._unpack_element(avg_price, css_unpacker)
+
+            product_rating = response.xpath('//span[@id="comment_score"]/span[1]')
+            if product_rating:
+                item['product_rating'] = self._unpack_element(product_rating, css_unpacker)
+
+            enviroment_rating = response.xpath('//span[@id="comment_score"]/span[2]')
+            if enviroment_rating:
+                item['enviroment_rating'] = self._unpack_element(enviroment_rating, css_unpacker)
+
+            service_rating = response.xpath('//span[@id="comment_score"]/span[3]')
+            if service_rating:
+                item['service_rating'] = self._unpack_element(service_rating, css_unpacker)
 
         yield item
 
@@ -77,5 +120,21 @@ class DianpingSpiderSpider(scrapy.Spider):
         if css:
             for item in css.getall():
                 if item.startswith('//s3plus.meituan.net/'):
-                    self.css_manager.get_css_unpacker(item)
-                    break
+                    return self.css_manager.get_css_unpacker(item)
+        return None
+
+    def _unpack_element(self, element, css_unpacker) -> str:
+        elements = element.xpath('d | e | text()')
+        data = []
+        if elements:
+            elements = elements.getall()
+
+            for element in elements:
+                ret = self.unpack_pattern.match(element)
+                if ret:
+                    val = css_unpacker.unpack(ret.group(1))
+                    data.append(val)
+                else:
+                    data.append(element.strip())
+
+        return ''.join(data)

@@ -35,8 +35,8 @@ class CSSUnpacker:
         else:
             msg = f'Failed to find value for {key} in css unpacker.'
             logger.error(msg)
-            # raise ValueError(msg)
-            return ''
+            raise ValueError(msg)
+            # return ''
 
     def _get_pixel(self, key: str) -> (int, int):
         pattern = re.compile('{}{{background:(.*?)px (.*?)px;}}'.format(key))
@@ -47,4 +47,6 @@ class CSSUnpacker:
             y = -int(float(result[1]))
             logger.debug('Key {} found pixel {}, {}'.format(key, x, y))
             return x, y
-        return -1, -1
+        msg = f'Failed to find pixel for {key} in css unpacker'
+        raise ValueError(msg)
+        # return -1, -1
