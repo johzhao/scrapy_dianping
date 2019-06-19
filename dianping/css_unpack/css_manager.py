@@ -2,7 +2,11 @@ import logging
 
 import requests
 
-import dianping.css_unpack.css_unpacker
+from dianping.css_unpack.css_unpacker import CSSUnpacker
+from dianping.svg_unpacker.svg_abi_unpacker import SVGAbiUnpacker
+from dianping.svg_unpacker.svg_itd_unpacker import SVGItdUnpacker
+from dianping.svg_unpacker.svg_lkr_unpacker import SVGLkrUnpacker
+
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -14,32 +18,37 @@ class CSSManager:
         self.unpackers = {}
         self.svgs = {}
 
-    def get_css_unpacker(self, url):
+    def get_css_unpacker(self, url) -> CSSUnpacker:
         if url not in self.unpackers:
-            css_url = 'http:{}'.format(url)
+            css_url = f'http:{url}'
             response = requests.get(css_url)
 
-            unpacker = dianping.css_unpack.css_unpacker.CSSUnpacker(self)
+            unpacker = CSSUnpacker(self)
             unpacker.set_content(response.content.decode('utf-8'))
 
             self.unpackers[url] = unpacker
 
         return self.unpackers[url]
 
-    def get_svg(self, url):
+    def get_svg(self, type_: str, url: str):
         if url not in self.svgs:
-            svg_url = 'http:{}'.format(url)
+            svg_url = f'http:{url}'
             response = requests.get(svg_url)
-            self.svgs[url] = response.content.decode('utf-8')
+            content = response.content.decode('utf-8')
+            svg_unpacker = self.get_unpacker(type_)(type_, content)
+            self.svgs[url] = svg_unpacker
 
         return self.svgs[url]
 
-
-def test():
-    m = CSSManager()
-    url = '//s3plus.meituan.net/v1/mss_0a06a471f9514fc79c981b5466f56b91/svgtextcss/47637d8eb34f013f3b3c2c997246a587.css'
-    p = m.get_css_unpacker(url)
-
-
-if __name__ == '__main__':
-    test()
+    @staticmethod
+    def get_unpacker(type_: str):
+        if type_ == 'abi':
+            return SVGAbiUnpacker
+        elif type_ == 'itd':
+            return SVGItdUnpacker
+        elif type_ == 'lkr':
+            return SVGLkrUnpacker
+        else:
+            msg = f'Unsupported svg type: {type_}.'
+            logger.error(msg)
+            raise ValueError(msg)

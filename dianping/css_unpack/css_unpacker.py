@@ -13,15 +13,15 @@ class CSSUnpacker:
         self.svg_pattern = re.compile(r'\[class\^="(.*?)"\]{.*?background-image: url(.*?);')
         self.svgs = {}
 
-    def set_content(self, content):
+    def set_content(self, content: str):
         self.content = content
         matchs = self.svg_pattern.findall(content)
         for item in matchs:
             key = item[0]
             svg_url = item[1][1:-1]
             logger.debug('Parsed svg with key {}, url: {}'.format(key, svg_url))
-            # svg = self.manager.get_svg(svg_url)
-            # self.svgs[key] = svg
+            svg = self.manager.get_svg(key, svg_url)
+            self.svgs[key] = svg
 
     def unpack(self, key: str) -> str:
         pass
@@ -35,22 +35,3 @@ class CSSUnpacker:
             y = -int(float(result[1]))
             logger.debug('Key {} found pixel {}, {}'.format(key, x, y))
             return x, y
-
-
-def test():
-    logging.basicConfig(level=logging.DEBUG)
-    from dianping.css_unpack.css_manager import CSSManager
-    manager = CSSManager()
-    with open('./output.css', 'r') as css_file:
-        data = css_file.read()
-    unpacker = CSSUnpacker(manager)
-    unpacker.set_content(data)
-
-    x, y = unpacker._get_pixel('.itdf8d')
-    logger.debug('Found pixel {}, {}'.format(x, y))
-
-    pass
-
-
-if __name__ == '__main__':
-    test()
