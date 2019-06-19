@@ -1,5 +1,7 @@
 import logging
 
+import pytest
+
 from dianping.css_unpack.css_manager import CSSManager
 from dianping.css_unpack.css_unpacker import CSSUnpacker
 
@@ -16,6 +18,7 @@ def test_css_manager():
     pass
 
 
+@pytest.mark.skip
 def test_css_unpacker():
     manager = CSSManager()
     with open('./examples/output_01.css', 'r') as css_file:

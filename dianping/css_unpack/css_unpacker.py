@@ -26,13 +26,17 @@ class CSSUnpacker:
 
     def unpack(self, key: str) -> str:
         x, y = self._get_pixel(key)
+        if x < 0 or y < 0:
+            return ''
+
         for svg_type, svg in self.svgs.items():
             if key.find(svg_type) == 0:
                 return svg.get_data(x, y)
         else:
             msg = f'Failed to find value for {key} in css unpacker.'
             logger.error(msg)
-            raise ValueError(msg)
+            # raise ValueError(msg)
+            return ''
 
     def _get_pixel(self, key: str) -> (int, int):
         pattern = re.compile('{}{{background:(.*?)px (.*?)px;}}'.format(key))
@@ -43,3 +47,4 @@ class CSSUnpacker:
             y = -int(float(result[1]))
             logger.debug('Key {} found pixel {}, {}'.format(key, x, y))
             return x, y
+        return -1, -1
