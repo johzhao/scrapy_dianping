@@ -35,10 +35,12 @@ class CSSManager:
             svg_url = f'http:{url}'
             response = requests.get(svg_url)
             content = response.content.decode('utf-8')
-            svg_unpacker = self.get_unpacker(type_)(type_, content)
-            self.svgs[url] = svg_unpacker
+            unpacker = self.get_unpacker(type_)
+            if unpacker:
+                svg_unpacker = unpacker(type_, content)
+                self.svgs[url] = svg_unpacker
 
-        return self.svgs[url]
+        return self.svgs.get(url, None)
 
     @staticmethod
     def get_unpacker(type_: str):
@@ -51,4 +53,5 @@ class CSSManager:
         else:
             msg = f'Unsupported svg type: {type_}.'
             logger.error(msg)
-            raise ValueError(msg)
+            # raise ValueError(msg)
+            return None

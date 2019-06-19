@@ -21,10 +21,18 @@ class CSSUnpacker:
             svg_url = item[1][1:-1]
             logger.debug('Parsed svg with key {}, url: {}'.format(key, svg_url))
             svg = self.manager.get_svg(key, svg_url)
-            self.svgs[key] = svg
+            if svg:
+                self.svgs[key] = svg
 
     def unpack(self, key: str) -> str:
-        pass
+        x, y = self._get_pixel(key)
+        for svg_type, svg in self.svgs.items():
+            if key.find(svg_type) == 0:
+                return svg.get_data(x, y)
+        else:
+            msg = f'Failed to find value for {key} in css unpacker.'
+            logger.error(msg)
+            raise ValueError(msg)
 
     def _get_pixel(self, key: str) -> (int, int):
         pattern = re.compile('{}{{background:(.*?)px (.*?)px;}}'.format(key))
