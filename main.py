@@ -6,6 +6,7 @@ from scrapy.crawler import CrawlerProcess
 from scrapy.utils.project import get_project_settings
 
 from dianping.spiders.dianping_spider import DianpingSpiderSpider
+import dianping.export
 
 logging.basicConfig(level=logging.INFO)
 
@@ -24,10 +25,11 @@ def timethis(func):
 
 @timethis
 def main():
-    process = CrawlerProcess(get_project_settings())
-    process.crawl(DianpingSpiderSpider)
-    process.start()
-    # export.export_excel('course', 'icourse163', './export.xlsx')
+    # process = CrawlerProcess(get_project_settings())
+    # process.crawl(DianpingSpiderSpider)
+    # process.start()
+
+    dianping.export.export_excel('scrapy', 'dianping', './dianping.xlsx')
 
 
 if __name__ == '__main__':

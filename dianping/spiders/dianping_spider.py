@@ -26,12 +26,6 @@ class DianpingSpiderSpider(scrapy.Spider):
 
     def _update_cookies(self):
         self.cookies = {}
-        # cookie_str = (
-        #     'cy=2; cye=beijing; _lxsdk_cuid=16b7001ef55c8-0ebb2ba9981f82-123e6e57-fa000-16b7001ef55c8; _lxsdk=16b7001ef55c8-0ebb2ba9981f82-123e6e57-fa000-16b7001ef55c8; _hc.v=c1c1dc00-f62c-437e-0e17-994d2d1fc567.1560952304; s_ViewType=10; _lxsdk_s=16b703e9c5a-fad-6f9-7e0%7C%7C19')
-        # fields = cookie_str.split(';')
-        # for field in fields:
-        #     splitted = field.split('=')
-        #     self.cookies[splitted[0].strip()] = splitted[1].strip()
 
     def start_requests(self):
         self._update_cookies()
@@ -72,7 +66,7 @@ class DianpingSpiderSpider(scrapy.Spider):
                 next_page = pages[-1]
                 next_page_url = next_page.attrib['href']
                 self.logger.info(next_page_url)
-                # yield scrapy.Request(next_page_url, callback=self.parse_list)
+                yield scrapy.Request(next_page_url, callback=self.parse_list)
 
     def parse_shop(self, response):
         css_unpacker = self._parse_css(response)
@@ -237,7 +231,6 @@ class DianpingSpiderSpider(scrapy.Spider):
                             result.append(';')
                         else:
                             result.append(c)
-                    # result.append(i.strip())
             return ''.join(result)
 
         self.logger.info(f'Failed to unpack for {element}')
