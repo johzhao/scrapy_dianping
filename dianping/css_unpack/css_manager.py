@@ -68,9 +68,9 @@ class CSSManager:
     def get_unpacker(type_: str):
         if type_ == 'abi':
             return SVGAbiUnpacker
-        elif type_ == 'itd':
+        elif type_ == 'itd' or type_ == 'yq':
             return SVGItdUnpacker
-        elif type_ == 'lkr':
+        elif type_ == 'lkr' or type_ == 'pt' or type_ == 'ym' or type_ == 'qds' or type_ == 'kwd':
             return SVGLkrUnpacker
         else:
             msg = f'Unsupported svg type: {type_}.'

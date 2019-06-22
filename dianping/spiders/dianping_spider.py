@@ -1,3 +1,4 @@
+import os
 import re
 
 import scrapy
@@ -17,9 +18,9 @@ class DianpingSpiderSpider(scrapy.Spider):
         # 'http://www.dianping.com/shop/97590984',
     ]
     css_manager = CSSManager()
-    unpack_pattern = re.compile(r'<[d|e] class="(.+?)"></.+?>')
+    unpack_pattern = re.compile(r'<svgmtsi class="(.+?)"></.+?>')
     value_pattern = re.compile(r'([0-9.]+)')
-    value_pattern2 = re.compile(r'<d class=".+?">(.+?)</d>')
+    value_pattern2 = re.compile(r'<[d|e] class=".+?">(.+?)</.+?>')
 
     cookies = {}
 
@@ -48,20 +49,24 @@ class DianpingSpiderSpider(scrapy.Spider):
         pass
 
     def parse_list(self, response):
-        self._parse_css(response)
+        unpacker = self._parse_css(response)
 
-        # a = response.xpath('//title/text()')
-        # b = a.get()
-        if response.xpath('//title/text()').get() == '验证中心':
-            yield from self.parse_verify(response)
-        else:
-            shops = response.xpath('//ul/li//div[@class="tit"]/a[1]/@href').getall()
-            if shops:
-                for shop in shops:
-                    self.logger.info(shop)
-                    yield scrapy.Request(shop, callback=self.parse_shop_v2, cookies=self.cookies)
-                    # break
+        has_shop_request = False
+        shops = response.xpath('//div[@class="content"]//div[contains(@class, "shop-list")]/ul/li')
+        for shop in shops:
+            comments = shop.xpath('div//span[@class="sear-highlight"]')
+            if comments:
+                comments = self._unpack_element(comments, unpacker)
+                comments = int(comments)
+                # 只爬取用户评论数大于100的店铺
+                if comments > 100:
+                    has_shop_request = True
+                    shop_url = shop.xpath('div/div[@class="tit"]/a[1]/@href')
+                    if shop_url:
+                        yield scrapy.Request(shop_url.get(), callback=self.parse_shop_v2, cookies=self.cookies)
+            # break
 
+        if has_shop_request:
             pages = response.xpath('//div[@class="page"]/a')
             if pages:
                 next_page = pages[-1]
@@ -133,13 +138,16 @@ class DianpingSpiderSpider(scrapy.Spider):
         unpacker = self._parse_css(response)
 
         item = DianpingShopItem()
+        item['_id'] = os.path.basename(response.url)
         item['url'] = response.url
 
         name = response.xpath('//div[@id="basic-info"]/h1/text()')
         if name:
             item['name'] = name.get().strip()
 
-        # TODO: Parse the address
+        address = response.xpath('//div[@id="basic-info"]/div[contains(@class, "address")]/span[2]')
+        if address:
+            item['address'] = self._unpack_font_element(address, unpacker)
 
         rating = response.xpath('//div[@id="basic-info"]/div[@class="brief-info"]/span[1]/@title')
         if rating:
@@ -147,7 +155,8 @@ class DianpingSpiderSpider(scrapy.Spider):
 
         tel = response.xpath('//p[contains(@class, "tel")]')
         if tel:
-            item['phone_number'] = self._unpack_font_element(tel, unpacker)
+            tel = self._unpack_font_element(tel, unpacker)
+            item['phone_number'] = tel.split(';')
 
         review_count = response.xpath('//span[@id="reviewCount"]')
         if review_count:
@@ -195,7 +204,7 @@ class DianpingSpiderSpider(scrapy.Spider):
         return None
 
     def _unpack_element(self, element, css_unpacker) -> str:
-        elements = element.xpath('d | e | text()')
+        elements = element.xpath('b/svgmtsi')
         data = []
         if elements:
             elements = elements.getall()
@@ -221,7 +230,14 @@ class DianpingSpiderSpider(scrapy.Spider):
                     key = ret.group(1)
                     result.append(css_unpacker.unpack_font_str(key))
                 else:
-                    result.append(i.strip())
+                    for c in i:
+                        if c == ' ':
+                            pass
+                        elif ord(c) == 160:
+                            result.append(';')
+                        else:
+                            result.append(c)
+                    # result.append(i.strip())
             return ''.join(result)
 
         self.logger.info(f'Failed to unpack for {element}')

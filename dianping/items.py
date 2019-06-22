@@ -9,6 +9,7 @@ import scrapy
 
 
 class DianpingShopItem(scrapy.Item):
+    _id = scrapy.Field()
     name = scrapy.Field()
     rating = scrapy.Field()
     comments = scrapy.Field()

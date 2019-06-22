@@ -12,6 +12,19 @@ logger.addHandler(logging.NullHandler())
 
 
 @pytest.mark.skip
+def test_parse_shop_list():
+    with open('./examples/output_01.html', 'rb') as html_file:
+        body = html_file.read()
+    url = 'http://www.dianping.com/shop/97590984'
+    response = HtmlResponse(url=url, body=body)
+
+    spider = DianpingSpiderSpider()
+
+    for item in spider.parse_list(response):
+        logger.debug(item)
+
+
+@pytest.mark.skip
 def test_parse_shop_detail():
     with open('./examples/output_02.html', 'rb') as html_file:
         body = html_file.read()
@@ -24,8 +37,9 @@ def test_parse_shop_detail():
         logger.debug(item)
 
 
+# @pytest.mark.skip
 def test_parse_shop_detail_v2():
-    with open('./examples/output_02.html', 'rb') as html_file:
+    with open('./examples/output_04.html', 'rb') as html_file:
         body = html_file.read()
     url = 'http://www.dianping.com/shop/97590984'
     response = HtmlResponse(url=url, body=body)
@@ -33,8 +47,8 @@ def test_parse_shop_detail_v2():
     spider = DianpingSpiderSpider()
 
     spider.parse_shop_v2(response)
-    # for item in spider.parse_shop_v2(response):
-    #     logger.debug(item)
+    for item in spider.parse_shop_v2(response):
+        logger.debug(item)
 
 
 def _unpack_element(element, css_unpacker) -> str:
