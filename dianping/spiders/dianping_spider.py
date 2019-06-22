@@ -204,7 +204,7 @@ class DianpingSpiderSpider(scrapy.Spider):
         return None
 
     def _unpack_element(self, element, css_unpacker) -> str:
-        elements = element.xpath('b/svgmtsi')
+        elements = element.xpath('b/svgmtsi | b/text()')
         data = []
         if elements:
             elements = elements.getall()

@@ -1,11 +1,21 @@
-# -*- coding: utf-8 -*-
+import logging
 
-# Define your item pipelines here
-#
-# Don't forget to add your pipeline to the ITEM_PIPELINES setting
-# See: https://doc.scrapy.org/en/latest/topics/item-pipeline.html
+import pymongo
+
+from dianping.settings import mongo_db_host, mongo_db_port
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 class ScrapyDianpingPipeline(object):
+
+    def __init__(self):
+        self.client = pymongo.MongoClient(mongo_db_host, mongo_db_port)
+        self.database = self.client['scrapy']
+        self.collection = self.database['dianping']
+
     def process_item(self, item, spider):
+        data = dict(item)
+        self.collection.update({'_id':data['_id']}, data, True)
         return item
