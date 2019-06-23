@@ -35,6 +35,7 @@ class DianpingCommentsSpider(scrapy.Spider):
                 shop_id = line.strip()
                 url = f'https://www.dianping.com/shop/{shop_id}/review_all?queryType=sortType&&queryVal=latest'
                 yield scrapy.Request(url, callback=self.parse, cookies=self.cookies)
+                break
 
     def parse(self, response):
         unpacker = self._parse_css(response)
@@ -53,6 +54,8 @@ class DianpingCommentsSpider(scrapy.Spider):
             self.logger.error(msg)
             raise scrapy.exceptions.CloseSpider(msg)
 
+        no_review = True
+
         reviews = response.xpath('//div[@class="reviews-items"]/ul/li')
         for review in reviews:
             timestamp = review.xpath('div[@class="main-review"]/div[contains(@class, "misc-info")]/span[1]/text()')
@@ -64,6 +67,7 @@ class DianpingCommentsSpider(scrapy.Spider):
                 if timestamp < self.review_date_limit:
                     continue
 
+            no_review = False
             item = DianpingReviewItem()
             item['shop_id'] = shop_id
             item['timestamp'] = time.mktime(timestamp.timetuple())
@@ -89,16 +93,17 @@ class DianpingCommentsSpider(scrapy.Spider):
 
             yield item
 
-        next_page = response.xpath('//div[@class="reviews-pages"]/a[last()]')
-        if next_page:
-            if next_page[0].attrib['title'] == '下一页':
-                next_page = next_page[0].attrib['href']
-                url = response.urljoin(next_page)
-                # yield scrapy.Request(url, callback=self.parse)
+        if not no_review:
+            next_page = response.xpath('//div[@class="reviews-pages"]/a[last()]')
+            if next_page:
+                if next_page[0].attrib['title'] == '下一页':
+                    next_page = next_page[0].attrib['href']
+                    url = response.urljoin(next_page)
+                    yield scrapy.Request(url, callback=self.parse)
 
     def _update_cookies(self):
         self.cookies = {}
-        cookie_str = ('s_ViewType=10; _lxsdk_cuid=16b847dae579d-09ca42943d3ef7-37667e02-fa000-16b847dae58c8; _lxsdk=16b847dae579d-09ca42943d3ef7-37667e02-fa000-16b847dae58c8; _hc.v=9be0b285-49ac-0f18-6bf4-3a7df746cfc3.1561295958; dper=1896dc3a5ddd04644d1b3e24af7f604b6ff4d79f2d558663b3cad7449376a2d4c90de45fa583fd95acd93a4ea465f4a580623a936115c58680cf2ba0196ecf4a344827412dc73851babfb4d2dbcd2ab6a41513040573074651abdcca0b7bad8b; ll=7fd06e815b796be3df069dec7836c3df; ua=%E8%B5%B5%E9%B9%8F_7770; ctu=81691623eb4c224070e34f8f70cc7f5daac2cab2f305e2ec95e2f4c071d425dd; cy=10; cye=tianjin; _lxsdk_s=16b84d43a29-e9c-a79-d38%7C%7C369')
+        cookie_str = ('cy=10; cye=tianjin; _lxsdk_cuid=16b84f7a539c8-0aa964cb16d935-37667e02-fa000-16b84f7a539c8; _lxsdk=16b84f7a539c8-0aa964cb16d935-37667e02-fa000-16b84f7a539c8; _hc.v=f59f3fee-88a6-f6c8-887e-c77578b98579.1561303951; dper=1896dc3a5ddd04644d1b3e24af7f604b1e94ac056f5c4cb5e36262ad2fbc7df4cbb6735ce31b585992da30d8a0027c6adb5bc5b0040e385aa40f88702b687c5c1bfa2e61ebee39baf6f1b4e07054c5a9eae6d108c8c5822cbe7059c1df1be9a3; ll=7fd06e815b796be3df069dec7836c3df; ua=%E8%B5%B5%E9%B9%8F_7770; ctu=81691623eb4c224070e34f8f70cc7f5d809caa692589e51158f593821d5ebabf; _lxsdk_s=16b84f7a350-bf0-60a-c15%7C%7C372')
         fields = cookie_str.split(';')
         for field in fields:
             splitted = field.split('=')
