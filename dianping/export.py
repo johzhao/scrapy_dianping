@@ -18,7 +18,7 @@ def export_excel(db_name: str, collection_name: str, filepath: str):
     client = pymongo.MongoClient(mongo_db_host, mongo_db_port)
     database = client[db_name]
     collection = database[collection_name]
-    for row, record in enumerate(collection.find(), start=1):
+    for row, record in enumerate(collection.find().sort('comments', -1), start=1):
         _export_record(sheet, row, record)
 
     wbk.save(filepath)

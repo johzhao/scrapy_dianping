@@ -29,7 +29,7 @@ def main():
     # process.crawl(DianpingSpiderSpider)
     # process.start()
 
-    dianping.export.export_excel('scrapy', 'dianping', './dianping.xlsx')
+    dianping.export.export_excel('scrapy', 'dianping', './shops.xls')
 
 
 if __name__ == '__main__':
