@@ -66,9 +66,9 @@ class CSSManager:
 
     @staticmethod
     def get_unpacker(type_: str):
-        if type_ == 'abi' or type_ == 'qds' or type_ == 'kwd':
+        if type_ == 'abi' or type_ == 'qds' or type_ == 'kwd' or type_ == 'nc':
             return SVGAbiUnpacker
-        elif type_ == 'itd' or type_ == 'yq':
+        elif type_ == 'itd' or type_ == 'yq' or type_ == 'ue':
             return SVGItdUnpacker
         elif type_ == 'lkr' or type_ == 'pt' or type_ == 'ym':
             return SVGLkrUnpacker
