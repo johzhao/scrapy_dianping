@@ -22,5 +22,11 @@ class DianpingShopItem(scrapy.Item):
     url = scrapy.Field()
 
 
-class DianpingCommentItem(scrapy.Item):
+class DianpingReviewItem(scrapy.Item):
+    shop_id = scrapy.Field()
+    username = scrapy.Field()
+    shop_name = scrapy.Field()
+    rating = scrapy.Field()
+    review = scrapy.Field()
+    timestamp = scrapy.Field()
     pass

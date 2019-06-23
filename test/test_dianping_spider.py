@@ -4,6 +4,7 @@ import pytest
 from scrapy.http.response.html import HtmlResponse
 
 from dianping.spiders.dianping_spider import DianpingSpiderSpider
+from dianping.spiders.dianping_comments_spider import DianpingCommentsSpider
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -13,8 +14,7 @@ logger.addHandler(logging.NullHandler())
 
 @pytest.mark.skip
 def test_parse_shop_list():
-    with open('./examples/output_01.html', 'rb') as html_file:
-        body = html_file.read()
+    body = _load_html_file('./examples/output_01.html')
     url = 'http://www.dianping.com/shop/97590984'
     response = HtmlResponse(url=url, body=body)
 
@@ -26,8 +26,7 @@ def test_parse_shop_list():
 
 @pytest.mark.skip
 def test_parse_shop_detail():
-    with open('./examples/output_02.html', 'rb') as html_file:
-        body = html_file.read()
+    body = _load_html_file('./examples/output_02.html')
     url = 'http://www.dianping.com/shop/97590984'
     response = HtmlResponse(url=url, body=body)
 
@@ -37,10 +36,9 @@ def test_parse_shop_detail():
         logger.debug(item)
 
 
-# @pytest.mark.skip
+@pytest.mark.skip
 def test_parse_shop_detail_v2():
-    with open('./examples/output_04.html', 'rb') as html_file:
-        body = html_file.read()
+    body = _load_html_file('./examples/output_04.html')
     url = 'http://www.dianping.com/shop/97590984'
     response = HtmlResponse(url=url, body=body)
 
@@ -51,21 +49,18 @@ def test_parse_shop_detail_v2():
         logger.debug(item)
 
 
-def _unpack_element(element, css_unpacker) -> str:
-    import re
+def test_parse_comments_01():
+    body = _load_html_file('./examples/comments_01.html')
+    url = 'https://www.dianping.com/shop/17983537/review_all?queryType=sortType&&queryVal=latest'
+    response = HtmlResponse(url=url, body=body)
 
-    elements = element.xpath('d | e | text()')
-    data = []
-    if elements:
-        elements = elements.getall()
+    spider = DianpingCommentsSpider()
 
-        pattern = re.compile(r'<[d|e] class="(.+?)"></.+?>')
-        for element in elements:
-            ret = pattern.match(element)
-            if ret:
-                val = css_unpacker.unpack(ret.group(1))
-                data.append(val)
-            else:
-                data.append(element.strip())
+    for review in spider.parse(response):
+        logger.info(review)
 
-    return ''.join(data)
+
+def _load_html_file(filepath: str):
+    with open(filepath, 'rb') as html_file:
+        body = html_file.read()
+    return body

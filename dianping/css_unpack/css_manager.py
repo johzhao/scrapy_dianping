@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 
 import requests
 from fontTools.ttLib import TTFont
@@ -24,6 +25,10 @@ class CSSManager:
         self.base_font_mapping = {}
         self._load_base_font()
 
+        self.abi_pattern = re.compile(r'<textPath xlink:href=')
+        self.itd_pattern = re.compile(r'<text x="\d+ \d+ ')
+        self.lkr_pattern = re.compile(r'<text x="\d+" y="\d+">')
+
     def get_css_unpacker(self, url) -> CSSUnpacker:
         if url not in self.unpackers:
             css_url = f'http:{url}'
@@ -41,7 +46,7 @@ class CSSManager:
             svg_url = f'http:{url}'
             response = requests.get(svg_url)
             content = response.content.decode('utf-8')
-            unpacker = self.get_unpacker(type_)
+            unpacker = self.get_unpacker(content)
             if unpacker:
                 svg_unpacker = unpacker(type_, content)
                 self.svgs[url] = svg_unpacker
@@ -64,16 +69,12 @@ class CSSManager:
         with open(font_mapping_file_path, 'r') as mapping_file:
             self.base_font_mapping = json.load(mapping_file)
 
-    @staticmethod
-    def get_unpacker(type_: str):
-        if type_ == 'abi' or type_ == 'qds' or type_ == 'kwd' or type_ == 'nc':
+    def get_unpacker(self, content: str):
+        if self.abi_pattern.findall(content):
             return SVGAbiUnpacker
-        elif type_ == 'itd' or type_ == 'yq' or type_ == 'ue':
+        elif self.itd_pattern.findall(content):
             return SVGItdUnpacker
-        elif type_ == 'lkr' or type_ == 'pt' or type_ == 'ym':
+        elif self.lkr_pattern.findall(content):
             return SVGLkrUnpacker
         else:
-            msg = f'Unsupported svg type: {type_}.'
-            logger.error(msg)
-            # raise ValueError(msg)
             return None
