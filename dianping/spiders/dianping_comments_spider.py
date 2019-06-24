@@ -28,14 +28,18 @@ class DianpingCommentsSpider(scrapy.Spider):
     def start_requests(self):
         self._update_cookies()
 
-        with open('./shop_ids.txt', 'r') as shop_id_file:
-            for line in shop_id_file:
-                if line.startswith('#'):
-                    continue
-                shop_id = line.strip()
-                url = f'https://www.dianping.com/shop/{shop_id}/review_all?queryType=sortType&&queryVal=latest'
-                yield scrapy.Request(url, callback=self.parse, cookies=self.cookies)
-                break
+        # with open('./shop_ids.txt', 'r') as shop_id_file:
+        #     for line in shop_id_file:
+        #         if line.startswith('#'):
+        #             continue
+        #         shop_id = line.strip()
+        #         url = f'https://www.dianping.com/shop/{shop_id}/review_all?queryType=sortType&&queryVal=latest'
+        #         yield scrapy.Request(url, callback=self.parse, cookies=self.cookies)
+        #         break
+
+        shop_id = self.__dict__['shop_id']
+        url = f'https://www.dianping.com/shop/{shop_id}/review_all?queryType=sortType&&queryVal=latest'
+        yield scrapy.Request(url, callback=self.parse, cookies=self.cookies)
 
     def parse(self, response):
         unpacker = self._parse_css(response)
@@ -85,7 +89,7 @@ class DianpingCommentsSpider(scrapy.Spider):
 
             review_words = review.xpath('div[@class="main-review"]/div[@class="review-words"]')
             if not review_words:
-                review_words = review.xpath('div[@class="main-review"]/div[@class="review-truncated-words"]')
+                review_words = review.xpath('div[@class="main-review"]/div[contains(@class, "review-words")]')
 
             if review_words:
                 review_words = self._unpack_element(review_words, unpacker)

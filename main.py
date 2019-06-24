@@ -42,9 +42,22 @@ def main():
     #     for row, record in enumerate(collection.find({}, {'_id': 1}), start=1):
     #         shop_id_file.write(f'{record["_id"]}\n')
 
-    process = CrawlerProcess(get_project_settings())
-    process.crawl(DianpingCommentsSpider)
-    process.start()
+    # process = CrawlerProcess(get_project_settings())
+    # process.crawl(DianpingCommentsSpider)
+    # process.start()
+
+    with open('./shop_ids.txt', 'r') as shop_id_file:
+        for line in shop_id_file:
+            if line.startswith('#'):
+                continue
+            shop_id = line.strip()
+            process = CrawlerProcess(get_project_settings())
+            param = {
+                'shop_id': shop_id,
+            }
+            process.crawl(DianpingCommentsSpider, **param)
+            process.start()
+            break
     pass
 
 
