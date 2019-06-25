@@ -28,18 +28,18 @@ class DianpingCommentsSpider(scrapy.Spider):
     def start_requests(self):
         self._update_cookies()
 
-        # with open('./shop_ids.txt', 'r') as shop_id_file:
-        #     for line in shop_id_file:
-        #         if line.startswith('#'):
-        #             continue
-        #         shop_id = line.strip()
-        #         url = f'https://www.dianping.com/shop/{shop_id}/review_all?queryType=sortType&&queryVal=latest'
-        #         yield scrapy.Request(url, callback=self.parse, cookies=self.cookies)
-        #         break
+        with open('./shop_ids.txt', 'r') as shop_id_file:
+            for line in shop_id_file:
+                if line.startswith('#'):
+                    continue
+                shop_id = line.strip()
+                url = f'https://www.dianping.com/shop/{shop_id}/review_all?queryType=sortType&&queryVal=latest'
+                yield scrapy.Request(url, callback=self.parse, cookies=self.cookies)
+                # break
 
-        shop_id = self.__dict__['shop_id']
-        url = f'https://www.dianping.com/shop/{shop_id}/review_all?queryType=sortType&&queryVal=latest'
-        yield scrapy.Request(url, callback=self.parse, cookies=self.cookies)
+        # shop_id = self.__dict__['shop_id']
+        # url = f'https://www.dianping.com/shop/{shop_id}/review_all?queryType=sortType&&queryVal=latest'
+        # yield scrapy.Request(url, callback=self.parse, cookies=self.cookies)
 
     def parse(self, response):
         unpacker = self._parse_css(response)
@@ -107,7 +107,7 @@ class DianpingCommentsSpider(scrapy.Spider):
 
     def _update_cookies(self):
         self.cookies = {}
-        cookie_str = ('cy=10; cye=tianjin; _lxsdk_cuid=16b84f7a539c8-0aa964cb16d935-37667e02-fa000-16b84f7a539c8; _lxsdk=16b84f7a539c8-0aa964cb16d935-37667e02-fa000-16b84f7a539c8; _hc.v=f59f3fee-88a6-f6c8-887e-c77578b98579.1561303951; dper=1896dc3a5ddd04644d1b3e24af7f604b1e94ac056f5c4cb5e36262ad2fbc7df4cbb6735ce31b585992da30d8a0027c6adb5bc5b0040e385aa40f88702b687c5c1bfa2e61ebee39baf6f1b4e07054c5a9eae6d108c8c5822cbe7059c1df1be9a3; ll=7fd06e815b796be3df069dec7836c3df; ua=%E8%B5%B5%E9%B9%8F_7770; ctu=81691623eb4c224070e34f8f70cc7f5d809caa692589e51158f593821d5ebabf; _lxsdk_s=16b84f7a350-bf0-60a-c15%7C%7C372')
+        cookie_str = ('cy=10; cye=tianjin; _lxsdk_cuid=16b8968edc3c8-0b8d94001720f5-37667e02-fa000-16b8968edc3c8; _lxsdk=16b8968edc3c8-0b8d94001720f5-37667e02-fa000-16b8968edc3c8; _hc.v=93e26f68-2c47-81ea-1ac4-d2347fb6d6ee.1561378484; lgtoken=038e200a0-d25e-4ba0-ac0b-03844d5136c8; dper=1896dc3a5ddd04644d1b3e24af7f604bb3037745ed454e889d0d83fb6cf801de8b27c78b60851aab0a36ca5e95544e1e57846df6154173c5d08f33d07cce3d6e4aae3ef8a3887de895a5eb94fee22239341498d6fec44766e4fe0ed8bb3fe4f8; ll=7fd06e815b796be3df069dec7836c3df; ua=%E8%B5%B5%E9%B9%8F_7770; ctu=81691623eb4c224070e34f8f70cc7f5d107e213c3b8e130abc6e8e17fcebfc20; _lxsdk_s=16b8968ebee-12a-356-f25%7C%7C17')
         fields = cookie_str.split(';')
         for field in fields:
             splitted = field.split('=')

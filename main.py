@@ -33,7 +33,7 @@ def main():
     # process.crawl(DianpingSpiderSpider)
     # process.start()
 
-    # dianping.export.export_excel('scrapy', 'dianping', './shops.xls')
+    # dianping.export.export_shops_to_excel('scrapy', 'dianping', './shops.xls')
 
     # client = pymongo.MongoClient(mongo_db_host, mongo_db_port)
     # database = client['scrapy']
@@ -46,18 +46,8 @@ def main():
     # process.crawl(DianpingCommentsSpider)
     # process.start()
 
-    with open('./shop_ids.txt', 'r') as shop_id_file:
-        for line in shop_id_file:
-            if line.startswith('#'):
-                continue
-            shop_id = line.strip()
-            process = CrawlerProcess(get_project_settings())
-            param = {
-                'shop_id': shop_id,
-            }
-            process.crawl(DianpingCommentsSpider, **param)
-            process.start()
-            break
+    dianping.export.export_reviews_to_excel('scrapy', 'review', './reviews.xls')
+
     pass
 
 
